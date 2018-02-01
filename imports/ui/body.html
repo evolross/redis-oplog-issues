@@ -18,9 +18,53 @@
     </header>
 
     <ul>
+      <li>
+        <button class="previous-five-tasks">
+          Previous 5 Tasks
+        </button>
+        <button class="next-five-tasks">
+          Next 5 Tasks
+        </button>
+      </li>
+    </ul>
+
+    <ul>
       {{#each tasks}}
         {{> task}}
       {{/each}}
+    </ul>
+
+    <header>
+      {{#with scorecard}}
+        <h1>Score: {{points}}</h1>
+      {{else}}
+        <h1>Score: No Score Yet</h1>
+      {{/with}}
+      
+      <label class="hide-completed">
+        Earn points by checking off tasks
+      </label>
+
+    </header>
+    <ul>
+      <li>
+        <button class="delete-scorecard">
+          Delete Scorecard
+        </button>
+      </li>
+      <li>
+        <button class="remove-all-tasks">
+          Remove All Tasks
+        </button>
+        <button class="add-twenty-tasks">
+          Add Twenty Tasks
+        </button>
+      </li>
+      <li>
+        <button class="reset-tasks">
+          Reset Tasks
+        </button>
+      </li>
     </ul>
   </div>
 </body>

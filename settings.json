@@ -1,0 +1,14 @@
+{
+    "redisOplog": {
+        "redis": {
+          "url": "redis://127.0.0.1:6379"
+        },
+        "retryIntervalMs": 10000,
+        "mutationDefaults": {
+            "optimistic": true,
+            "pushToRedis": true
+        },
+        "debug": false,
+        "overridePublishFunction": true
+    }	
+}

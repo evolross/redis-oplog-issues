@@ -119,9 +119,6 @@ Meteor.methods({
       throw new Meteor.Error(401, 'You need to be logged in to reset tasks.');
     }
 
-    //  Call internal server function - DOING IT THIS WAY BECAUSE THIS IS HOW MY APP DOES IT - TRYING TO MIMIC MY APP
-    //_resetTasks();
-
     //  Find the tasks       
     var tasks = [];
 

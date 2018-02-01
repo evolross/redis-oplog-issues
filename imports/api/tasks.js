@@ -27,6 +27,9 @@ if (Meteor.isServer) {
     check(limit, positiveIntegerCheck);
     check(skip, positiveIntegerCheck);
 
+    console.log("limit: ", limit);
+    console.log("skip: ", skip);
+
     //  Return page-limit of tasks at a time, sorted by their creation date, and skipped to the correct page
     return Tasks.find({
       $or: [

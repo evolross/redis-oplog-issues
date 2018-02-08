@@ -17,6 +17,27 @@
       {{/if}}
     </header>
 
+    <header>
+      {{#with scorecard}}
+        <h1>
+          Score: {{points}} - 
+          {{#if scorecardStatusIs 'new'}}
+              <div class="scorecard-status-pill-new">New</div>
+          {{/if}}
+          {{#if scorecardStatusIs 'old'}}
+              <div class="scorecard-status-pill-old">Old</div>
+          {{/if}} 
+        </h1>
+      {{else}}
+        <h1>Score: No Score Yet</h1>
+      {{/with}}
+      
+      <label class="hide-completed">
+        Earn points by checking off tasks
+      </label>
+
+    </header>
+
     <ul>
       <li>
         <button class="previous-five-tasks">
@@ -34,20 +55,11 @@
       {{/each}}
     </ul>
 
-    <header>
-      {{#with scorecard}}
-        <h1>Score: {{points}}</h1>
-      {{else}}
-        <h1>Score: No Score Yet</h1>
-      {{/with}}
-      
-      <label class="hide-completed">
-        Earn points by checking off tasks
-      </label>
-
-    </header>
     <ul>
       <li>
+        <button class="toggle-scorecard">
+          Toggle Scorecard Status
+        </button>
         <button class="delete-scorecard">
           Delete Scorecard
         </button>
@@ -58,6 +70,9 @@
         </button>
         <button class="add-twenty-tasks">
           Add Twenty Tasks
+        </button>
+        <button class="add-two-thousand-tasks">
+          Add 2000 Tasks
         </button>
       </li>
       <li>

@@ -2,10 +2,33 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 import { Match } from 'meteor/check';
+import { Scorecards } from './scorecards.js';
 
 export const Tasks = new Mongo.Collection('tasks');
 
 if (Meteor.isServer) {
+
+  Tasks.before.update(function (userId, doc, fieldNames, modifier, options) {
+
+    if(modifier.$set && modifier.$set.isReset) {
+      console.log("Tasks.before.update: isReset is being set...");
+
+      //  Increment the Scorecard's points
+      Scorecards.update({owner: userId}, {$inc: {points: 1}}, function(error) {
+        // Display the error to the user
+        if(error) {
+          // Display the error to the user
+          console.log("SERVER ERROR: Tasks.before.update: Error updating Scorecard's points in collection hook: " + (error.reason ? error.reason : error.message));  
+          throw new Meteor.Error(500, "Error updating Scorecard's points in collection hook: " + (error.reason ? error.reason : error.message));  
+        }
+        else {
+          console.log("Tasks.before.update successfully incremented the user's Scorecard.");
+        }
+      });
+    }
+
+  });
+
   // This code only runs on the server
   // Only publish tasks that are public or belong to the current user
   Meteor.publish('tasks', function tasksPublication() {
@@ -55,6 +78,7 @@ Meteor.methods({
 
     Tasks.insert({
       text,
+      color: "#1a9604",
       isReset: "Not Reset Yet",
       createdAt: new Date(),
       owner: this.userId,

@@ -110,6 +110,38 @@ header .hide-completed {
   margin-left: 5px;
 }
 
+.task-status {
+  width: 25px;
+  height: 25px;
+  border-radius: 13px;
+  display: inline-block;
+  margin: 0px 0px 0px 10px;
+}
+
+.scorecard-status-pill-new {
+  background-color: #73d8ff;
+  color: #FFF;
+  padding: 5px;
+  border-radius: 10px;
+  display: inline-block;
+  font-weight: 400;
+  width: 75px;
+  text-align: center;
+  border: 2px solid #61bde0;
+}
+
+.scorecard-status-pill-old {
+  background-color: #a51b81;
+  color: #cecece;
+  padding: 5px;
+  border-radius: 10px;
+  display: inline-block;
+  font-weight: 400;
+  width: 75px;
+  text-align: center;
+  border: 2px solid #825375;
+}
+
 @media (max-width: 600px) {
   li {
     padding: 12px 15px;

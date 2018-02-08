@@ -48,6 +48,9 @@ Template.body.helpers({
     //  Return the user's scorecard
     return Scorecards.findOne();
   },
+  scorecardStatusIs(status) {
+    return this.status === status;
+  },
   incompleteCount() {
     return Tasks.find({ checked: { $ne: true } }).count();
   },
@@ -66,7 +69,7 @@ Template.body.events({
 
     //  THIS IS A HACK AS IN MY REAL APP I DENORMALIZE THE "TASK COUNT" ON ANOTHER COLLECTION
     //  FOR THIS REPO, I'M JUST HARD-CODING IT
-    var taskCount = 20;
+    var taskCount = 2000;
 
     /*console.log("instance.page.get(): ", instance.page.get());
     console.log("taskCount: ", taskCount);
@@ -94,6 +97,13 @@ Template.body.events({
   'change .hide-completed input'(event, instance) {
     instance.state.set('hideCompleted', event.target.checked);
   },
+  'click .toggle-scorecard'(event, instance) {
+
+    //debugger;
+
+    //  Written this way to mimic my production app
+    clientToggleScorecard();
+  },
   'click .delete-scorecard'(event, instance) {
     Meteor.call('scorecards.remove');
   },
@@ -107,6 +117,13 @@ Template.body.events({
       Meteor.call('tasks.insert', "This is task number " + (index + 1) + ".");
     }
   },
+  'click .add-two-thousand-tasks'(event, instance) {
+    //  Loop twenty times over insert to insert twenty tasks easily
+    for (var index = 0; index < 2000; index++) {
+      // Insert a task into the collection
+      Meteor.call('tasks.insert', "This is task number " + (index + 1) + ".");
+    }
+  },
   'click .reset-tasks'(event, instance) {
       // Call reset tasks Meteor Method
       Meteor.call('resetTasks', function(error) {
@@ -115,3 +132,16 @@ Template.body.events({
       });
   }
 });
+
+//  Written this way to mimic my production app
+var clientToggleScorecard = function() {
+
+  Meteor.call('scorecards.toggle', function(error, result) {
+    if(error) {      
+      console.log("Error: Toggling scorecard status: " + error.message);
+    }
+    else {
+      console.log("Successfully toggled scorecard status.");
+    }
+  });           
+}

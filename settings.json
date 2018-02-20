@@ -1,7 +1,14 @@
 {
+    "galaxy.meteor.com": {
+        "env": {
+            "MONGO_URL" : "",
+            "MONGO_OPLOG_URL_OLD": "",
+            "ROOT_URL": "https://todos.<yourdomain>.com"
+        }
+    },
     "redisOplog": {
         "redis": {
-          "url": "redis://127.0.0.1:6379"
+          "url": ""
         },
         "retryIntervalMs": 10000,
         "mutationDefaults": {

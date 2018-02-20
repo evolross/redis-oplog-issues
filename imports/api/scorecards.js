@@ -9,7 +9,14 @@ if (Meteor.isServer) {
   // This code only runs on the server
   // Only publish tasks that are public or belong to the current user
   Meteor.publish('scorecard', function tasksPublication() {
-    return Scorecards.find({owner: this.userId });
+
+    return Scorecards.find({
+      owner: this.userId 
+    }, {
+      //disableOplog: true,
+      //pollingIntervalMs: 5000
+    });
+    
   });
 }
 
@@ -61,6 +68,9 @@ Meteor.methods({
       if(!task)
         throw new Meteor.Error('not-authorized');
 
+      //  Do a count of the tasks
+      var taskCount = Tasks.find({owner: userId}, {fields: {_id: 1}}).count();
+
       var newStatus = scorecard.status === "new" ? "old" : "new";
 
       Scorecards.update({owner: this.userId}, {$set: {status: newStatus}}, function(error) {
@@ -71,20 +81,20 @@ Meteor.methods({
           console.log("Scorecard's status successfully updated.");
 
           //  Do an arbitrary update in a nested callback
-          Tasks.update({ owner: userId }, {$set: {isReset: "Points Awarded!"}}, {multi: true}, function(error) {
+          Tasks.update({ owner: userId }, {$set: {isReset: "Points Awarded for all " + taskCount + " tasks!"}}, {multi: true}, function(error) {
             if(error) {
               throw new Meteor.Error(500, "There was updating tasks after toggling the status of a scorecard: " + (error.reason ? error.reason : error.message));
               console.log("scorecards.toggle: There was updating tasks after toggling the status of a scorecard: " + (error.reason ? error.reason : error.message));
             }
-            else {
-              /*//  Do an arbitrary update in a nested callback
+            /*else {
+              //  Do an arbitrary update in a nested callback
               Tasks.update({ owner: userId }, {$set: {isReset: "Updated Again!"}}, {multi: true}, function(error) {
                 if(error) {
                   throw new Meteor.Error(500, "There was updating tasks after toggling the status of a scorecard: " + (error.reason ? error.reason : error.message));
                   console.log("scorecards.toggle: There was updating tasks after toggling the status of a scorecard: " + (error.reason ? error.reason : error.message));
                 }
-              });*/
-            }
+              });
+            }*/
           });
         }
       });

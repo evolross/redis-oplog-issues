@@ -13,6 +13,8 @@ if (Meteor.isServer) {
     if(modifier.$set && modifier.$set.isReset) {
       console.log("Tasks.before.update: isReset is being set...");
 
+      console.log("userId: ", userId);
+
       //  Increment the Scorecard's points
       Scorecards.update({owner: userId}, {$inc: {points: 1}}, function(error) {
         // Display the error to the user

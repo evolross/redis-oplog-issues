@@ -6,14 +6,42 @@ import { Scorecards } from './scorecards.js';
 
 export const Tasks = new Mongo.Collection('tasks');
 
+Tasks.allow({
+  insert: function(userId, doc) { 
+    return true;
+  },
+  update: function(userId, doc, fieldNames, modifier) {
+    return true;
+  }
+});
+
 if (Meteor.isServer) {
+
+  //  Before a task is inserted
+  Tasks.after.insert(function (userId, doc) {
+
+    //  Increment all tasks order by one after this task (so this gets inserted in the correct order)
+    var taskOrder = doc.order;
+    //var totalTasks = Tasks.find({}, {fields: {_id: 1}}).count();
+
+    //console.log("taskOrder: ", taskOrder);
+    //console.log("totalTasks: ", totalTasks);
+
+    Tasks.direct.update({order: {$gte: taskOrder}, _id: {$ne: doc._id}}, {$inc: {order: 1}}, {multi: true}, function(error) {
+      if(error) {
+        throw new Meteor.Error(500, "SERVER ERROR: Tasks.before.insert: Error incrementing order of existing tasks. " + (error.reason ? error.reason : error.message));
+      }
+      else {
+        console.log("Successfully incremented tasks.");
+      }
+    });
+
+  });
 
   Tasks.before.update(function (userId, doc, fieldNames, modifier, options) {
 
     if(modifier.$set && modifier.$set.isReset) {
-      console.log("Tasks.before.update: isReset is being set...");
-
-      console.log("userId: ", userId);
+      //console.log("Tasks.before.update: isReset is being set...");
 
       //  Increment the Scorecard's points
       Scorecards.update({owner: userId}, {$inc: {points: 1}}, function(error) {
@@ -23,12 +51,31 @@ if (Meteor.isServer) {
           console.log("SERVER ERROR: Tasks.before.update: Error updating Scorecard's points in collection hook: " + (error.reason ? error.reason : error.message));  
           throw new Meteor.Error(500, "Error updating Scorecard's points in collection hook: " + (error.reason ? error.reason : error.message));  
         }
-        else {
-          console.log("Tasks.before.update successfully incremented the user's Scorecard.");
-        }
+        //else {
+          //console.log("Tasks.before.update successfully incremented the user's Scorecard.");
+        //}
       });
     }
 
+  });
+
+  //  After a task is removed
+  Tasks.before.remove(function (userId, doc) {
+
+    //  Decrement the order of the remaining tasks after this task
+    var taskOrder = doc.order + 1;
+    //var totalTasks = Tasks.find({}, {fields: {_id: 1}}).count();
+
+    //console.log("Tasks.before.remove: taskOrder: ", taskOrder);
+
+    Tasks.update({order: {$gte: taskOrder}}, {$inc: {order: -1}}, {multi: true}, function(error) {
+      if(error) {
+        throw new Meteor.Error(500, "SERVER ERROR: Tasks.before.remove: Error deccrementing order of existing tasks. " + (error.reason ? error.reason : error.message));
+      }
+      /*else {
+        console.log("Successfully decremented tasks.");
+      }*/
+    });
   });
 
   // This code only runs on the server
@@ -52,34 +99,68 @@ if (Meteor.isServer) {
     check(limit, positiveIntegerCheck);
     check(skip, positiveIntegerCheck);
 
-    console.log("limit: ", limit);
-    console.log("skip: ", skip);
+    let self = this;
+
+    //console.log("limit: ", limit);
+    //console.log("skip: ", skip);
 
     //  Return page-limit of tasks at a time, sorted by their creation date, and skipped to the correct page
-    return Tasks.find({
+    var tasksHandle = Tasks.find({
       $or: [
         { private: { $ne: true } },
         { owner: this.userId },
       ],
     }, {
-      sort: {createdAt: 1},
+      sort: {order: 1, createdAt: 1},
       limit: limit,
       skip: skip
+    }).observe({
+      added: function (added) {
+
+        //console.log("tasksByPage: added: ", added);
+
+        self.added("tasks", added._id, added);
+      },
+      changed: function(changed, old) {
+
+        //console.log("tasksByPage: changed - new: ", changed);
+        //console.log("tasksByPage: changed - old: ", old);
+
+        self.changed("tasks", changed._id, changed);
+      },
+      removed: function(removed) {
+
+        //console.log("tasksByPage: removed: ", removed);
+
+        self.removed("tasks", removed._id);
+      }
+
     });
+
+    //  Mark the subscription as ready
+    self.ready();
+
+    // Stop observing the cursor when client unsubs.
+    self.onStop(function () {
+      tasksHandle.stop();
+    });
+
   });
 }
 
 Meteor.methods({
-  'tasks.insert'(text) {
+  'tasks.insert'(text, order) {
     check(text, String);
+    check(order, Number);
 
     // Make sure the user is logged in before inserting a task
     if (! this.userId) {
       throw new Meteor.Error('not-authorized');
     }
 
-    Tasks.insert({
-      text,
+    Tasks.direct.insert({
+      text: text,
+      order: order,
       color: "#1a9604",
       isReset: "Not Reset Yet",
       createdAt: new Date(),
@@ -105,7 +186,7 @@ Meteor.methods({
       throw new Meteor.Error('not-authorized');
     }
 
-    Tasks.remove({ owner: this.userId }, function(error) {
+    Tasks.direct.remove({ owner: this.userId }, function(error) {
       if(error)
         throw new Meteor.Error("SERVER ERROR: Removing all users tasks. ", error.message);
     });

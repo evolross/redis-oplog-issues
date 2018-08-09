@@ -37,10 +37,10 @@ Template.body.helpers({
     const instance = Template.instance();
     if (instance.state.get('hideCompleted')) {
       // If hide completed is checked, filter tasks
-      return Tasks.find({ checked: { $ne: true } }, { sort: { createdAt: -1 } });
+      return Tasks.find({ checked: { $ne: true } }, { sort: { order: 1, createdAt: -1 } });
     }
     // Otherwise, return all of the tasks
-    return Tasks.find({}, { sort: { createdAt: -1 } });
+    return Tasks.find({}, { sort: { order: 1, createdAt: -1 } });
   },
   scorecard() {
     const instance = Template.instance();
@@ -114,14 +114,14 @@ Template.body.events({
     //  Loop twenty times over insert to insert twenty tasks easily
     for (var index = 0; index < 20; index++) {
       // Insert a task into the collection
-      Meteor.call('tasks.insert', "This is task number " + (index + 1) + ".");
+      Meteor.call('tasks.insert', "This is task number " + (index + 1) + ".", index + 1);
     }
   },
   'click .add-two-thousand-tasks'(event, instance) {
     //  Loop twenty times over insert to insert twenty tasks easily
     for (var index = 0; index < 2000; index++) {
       // Insert a task into the collection
-      Meteor.call('tasks.insert', "This is task number " + (index + 1) + ".");
+      Meteor.call('tasks.insert', "This is task number " + (index + 1) + ".", index + 1);
     }
   },
   'click .reset-tasks'(event, instance) {

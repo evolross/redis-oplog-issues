@@ -12,8 +12,29 @@
           Public
         {{/if}}
       </button>
+
+      <!-- <button class="insert-task-client">
+        Insert New Task Client
+      </button>
+
+      <button class="insert-task-mm">
+        Insert New Task MM
+      </button> -->
+
+      <button class="unset-status">
+        $unset Status
+      </button>
+
     {{/if}}
 
-    <span class="text"><strong>{{username}}</strong> - {{text}} - {{isReset}}</span><div class="task-status" style="background-color: {{color}};"></div>
+    <div>
+      <span class="text"><strong>{{order}}</strong> - {{text}}</span>
+
+      {{#if hasStatusColor}}
+        <div class="task-status" style="background-color: {{color}};"></div>
+      {{else}}
+        <div class="task-status" style="border: solid 2px red;"></div>
+      {{/if}}
+    </div>
   </li>
 </template>

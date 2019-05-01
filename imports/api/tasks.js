@@ -1,8 +1,14 @@
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
+import { Random } from 'meteor/random'
 import { check } from 'meteor/check';
 import { Match } from 'meteor/check';
 import { Scorecards } from './scorecards.js';
+
+import { EJSON } from 'meteor/ejson';
+
+//  Redis Oplog imports
+import { getRedisPusher, Events, RedisPipe } from 'meteor/cultofcoders:redis-oplog';
 
 export const Tasks = new Mongo.Collection('tasks');
 
@@ -91,8 +97,11 @@ if (Meteor.isServer) {
 
   //  Publish paginated
   Meteor.publish('tasksByPage', function(limit, skip) {
+
+    console.log("tasksByPage called: limit: ", limit, " - skip: ", skip);
+
     // Check inputs
-    var positiveIntegerCheck = Match.Where(function(x) {
+    let positiveIntegerCheck = Match.Where(function(x) {
         check(x, Match.Integer);
         return x >= 0;
     });
@@ -101,11 +110,8 @@ if (Meteor.isServer) {
 
     let self = this;
 
-    //console.log("limit: ", limit);
-    //console.log("skip: ", skip);
-
     //  Return page-limit of tasks at a time, sorted by their creation date, and skipped to the correct page
-    var tasksHandle = Tasks.find({
+    let tasksHandle = Tasks.find({
       $or: [
         { private: { $ne: true } },
         { owner: this.userId },
@@ -167,6 +173,69 @@ Meteor.methods({
       owner: this.userId,
       username: Meteor.users.findOne(this.userId).username,
     });
+  },
+  'tasks.bulkInsert'(quantity) {
+    check(quantity, Number);
+
+    // Make sure the user is logged in before inserting a task
+    if (! this.userId) {
+      throw new Meteor.Error('not-authorized');
+    }
+
+    if(Meteor.isServer) {
+
+      //  Create array to hold new task objects
+      let newTasks = [];
+
+      //  Create bulk insert objects helper for new tasks
+      let bulkTaskInsert = Tasks.rawCollection().initializeUnorderedBulkOp();
+
+      //  Loop twenty times over insert to insert twenty tasks easily
+      for (let index = 0; index < quantity; index++) {
+
+        let newTask = {
+          _id: Random.id(),
+          text: "This is task number " + (index + 1) + ".",
+          order: index + 1,
+          color: "#1a9604",
+          isReset: "Not Reset Yet",
+          createdAt: new Date(),
+          owner: this.userId,
+          username: Meteor.users.findOne(this.userId).username,
+        }
+
+        //  Add task to the bulk insert
+        bulkTaskInsert.insert(newTask);
+
+        //  Add task to array (so we can later use it to fire redis update manually)
+        newTasks.push(newTask);
+      }
+
+      try {
+        bulkTaskInsert.execute();
+      }
+      catch(error) {
+        console.log("SERVER ERROR: tasks.bulkInsert: Bulk inserting new tasks. " + error.message);
+        throw Meteor.Error(500, "There was an error adding bulk tasks. " + (error.reason ? error.reason : error.message));
+      }
+      finally {
+
+        let redisPusher = getRedisPusher();
+
+        //  Now loop to send out insert updates to redis
+        for(let task of newTasks) {
+
+          //console.log("_id: ", task._id);
+          //console.log("Task: ", Tasks.findOne(task._id));//, {fields: {text: 1}}).text);
+
+          //  Publish this task insert to redis-oplog
+          redisPusher.publish('tasks', EJSON.stringify({
+            [RedisPipe.DOC]: {_id: task._id},
+            [RedisPipe.EVENT]: Events.INSERT
+          }));
+        }
+      }
+    }
   },
   'tasks.remove'(taskId) {
     check(taskId, String);

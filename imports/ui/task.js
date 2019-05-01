@@ -10,7 +10,7 @@ Template.task.helpers({
     return this.owner === Meteor.userId();
   },
   hasStatusColor() {
-    console.log("Task ", this.order, " hasStatusColor: ", !!this.color);
+    //console.log("Task ", this.order, " hasStatusColor: ", !!this.color);
     return !!this.color;
   }
 });

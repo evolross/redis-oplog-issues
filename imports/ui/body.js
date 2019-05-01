@@ -11,7 +11,7 @@ import './body.html';
 Template.body.onCreated(function bodyOnCreated() {
 
   //  Set instance reference
-  var instance = this;
+  let instance = this;
 
   instance.state = new ReactiveDict();
 
@@ -69,7 +69,7 @@ Template.body.events({
 
     //  THIS IS A HACK AS IN MY REAL APP I DENORMALIZE THE "TASK COUNT" ON ANOTHER COLLECTION
     //  FOR THIS REPO, I'M JUST HARD-CODING IT
-    var taskCount = 2000;
+    let taskCount = 2000;
 
     /*console.log("instance.page.get(): ", instance.page.get());
     console.log("taskCount: ", taskCount);
@@ -112,17 +112,22 @@ Template.body.events({
   },
   'click .add-twenty-tasks'(event, instance) {
     //  Loop twenty times over insert to insert twenty tasks easily
-    for (var index = 0; index < 20; index++) {
+    for (let index = 0; index < 20; index++) {
       // Insert a task into the collection
       Meteor.call('tasks.insert', "This is task number " + (index + 1) + ".", index + 1);
     }
   },
   'click .add-two-thousand-tasks'(event, instance) {
     //  Loop twenty times over insert to insert twenty tasks easily
-    for (var index = 0; index < 2000; index++) {
+    for (let index = 0; index < 2000; index++) {
       // Insert a task into the collection
       Meteor.call('tasks.insert', "This is task number " + (index + 1) + ".", index + 1);
     }
+  },
+  'click .add-twenty-bulk-tasks'(event, instance) {
+
+    //  Call meteor method to bulk insert tasks
+    Meteor.call('tasks.bulkInsert', 20);
   },
   'click .reset-tasks'(event, instance) {
       // Call reset tasks Meteor Method
